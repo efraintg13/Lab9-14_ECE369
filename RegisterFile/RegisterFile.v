@@ -64,4 +64,10 @@ module RegisterFile(ReadRegister1, ReadRegister2, WriteRegister, WriteData, RegW
 		ReadData2 <= Registers[ReadRegister2];
 	end
 
+	always @(negedge Clk) begin
+		if (RegWrite == 1) begin
+			WriteData <= Registers[WriteRegister];
+		end
+	end
+
 endmodule
