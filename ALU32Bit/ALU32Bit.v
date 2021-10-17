@@ -26,16 +26,295 @@
 //   operations needed to support. 
 ////////////////////////////////////////////////////////////////////////////////
 
-module ALU32Bit(ALUControl, A, B, ALUResult, Zero);
+module ALU32Bit(ALUControl, A, B, ALUResult, Zero, LoIN, HiIN, LoOUT, HiOUT);
 
-	input [3:0] ALUControl; // control bits for ALU operation
+	input [5:0] ALUControl; // control bits for ALU operation
                                 // you need to adjust the bitwidth as needed
 	input [31:0] A, B;	    // inputs
+	
+	input [31:0] LoIN, HiIN;
 
 	output [31:0] ALUResult;	// answer
 	output Zero;	    // Zero=1 if ALUResult == 0
 
+	output reg [31:0] LoOUT;
+	output reg [31:0] HiOUT;
+
+	reg
+
+
     /* Please fill in the implementation here... */
+	always @(*) begin
+
+		Zero <= 0;
+		LoIN <= LoOUT;
+		HiIN <= HiOUT;
+
+		case (ALUControl)
+
+			// Arithmetic
+			// add
+			6'b000000: begin
+				ALUResult <= $signed(A) + $signed(B);
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// addu
+			6'b100000: begin
+				ALUResult <= A + B;
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// sub
+			6'b000001: begin
+				ALUResult <= A - B;
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// mul
+			6'b000010: begin
+				ALUResult <= A * B;
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// mult
+			6'b000011: begin
+				ALUResult <= $signed(A) * $signed(B);
+				HiOUT <= ALUResult[63:32];
+				LoOUT <= ALUResult[31:0];
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// multu
+			6'b100001: begin
+				ALUResult <= A * B;
+				HiOUT <= ALUResult[63:32];
+				LoOUT <= ALUResult[31:0];
+				if (ALUResult == 0)
+					Zero <= 1;			
+			end
+
+			// madd
+			6'b000100: begin
+				ALUResult <= $signed({HiIN, LoIN}) + $signed(($signed(A) * $signed(B));
+				HiOUT <= ALUResult[63:32];
+				LoOUT <= ALUResult[31:0];
+				if (ALUResult == 0)
+					Zero <= 1;					
+			end
+
+			// msub
+			6'b000101: begin
+				ALUResult <= $signed({HiIN, LoIN}) - $signed(($signed(A) * $signed(B));
+				HiOUT <= ALUResult[63:32];
+				LoOUT <= ALUResult[31:0];
+				if (ALUResult == 0)
+					Zero <= 1;					
+			end
+
+			// and 
+			6'b001111: begin
+				ALUResult <= A & B;
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// or
+			6'b010000: begin
+				ALUResult <= A | B;
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// nor
+			6'b010001: begin
+				ALUResult <= ~(A | B);
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// xor
+			6'b010010: begin
+				ALUResult <= (A & ~B) | (~A & B);
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// seh
+			6'b010011: begin
+				if (B[15] == 1) begin
+					ALUResult <= {16'b1111111111111111, B[15:0]};
+				end
+				else begin
+					ALUResult <= {16'b0, B[15:0]};
+				end
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// sll
+			6'b010100: begin
+				ALUResult <= B << A;
+				if (ALUResult == 0)
+					Zero <= 1; 
+			end
+
+			// srl
+			6'b010101: begin
+				ALUResult <= B >> A;
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// movn
+			6'b010110: begin
+				if (B != 0) begin
+					ALUResult <= A;
+				end
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// movz
+			6'b010111: begin
+				if (B == 0) begin
+					ALUResult <= A;
+				end
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// rotr
+			6'b011000: begin
+				ALUResult <= ((A >> B) | (A << (32 - B)));
+				if (ALUResult == 0)
+					Zero <= 1; 
+			end
+
+			// sra
+			6'b011001: begin
+				ALUResult <= B >>> A;
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// seb
+			6'b011010: begin
+				if (B[7] == 1) begin
+					ALUResult <= {24'b111111111111111111111111, B[7:0]};
+				end
+				else begin
+					ALUResult <= {24'b0, B[7:0]};
+				end
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// slt
+			6'b011011: begin
+				ALUResult <= ($signed(A) < $signed(B));
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// stlu
+			6'b100010: begin
+				ALUResult <= (A < B);
+				if (ALUResult == 0)
+					Zero <= 1;
+			end
+
+			// mthi
+			6'b011100: begin
+				HiOUT <= A;
+			end
+
+			// mtlo
+			6'b011101: begin
+				LoOUT <= A;
+			end
+
+			// mfhi
+			6'b011110: begin
+				ALUResult <= HiIN;
+			end
+
+			// mflo
+			6'011111: begin
+				ALUResult <= LoIN;
+			end
+
+			// lui
+			6'000110: begin
+	            ALUResult <= {B[15:0], 16'b0};
+           		if (ALUResult == 0)
+                	Zero <= 1;			
+			end
+
+			// bgez
+			6'b000111: begin
+				if ($signed(A) >= 0)
+					Zero <= 1;
+			end
+
+			// beq
+			6'b001000: begin
+				if ($signed(A) == $signed(B))
+					Zero <= 1;
+			end
+
+			// bne
+			6'b001001: begin
+				if ($signed(A) != $signed(B))
+					Zero <= 1;
+			end
+
+			// bgtz
+			6'b001010: begin
+				if ($signed(A) > 0)
+					Zero <= 1;
+			end
+
+			// blez
+			6'b001011: begin
+				if ($signed(A) <= 0)
+					Zero <= 1;
+			end
+
+			// bltz
+			6'b001100: begin
+				if ($signed(A) < 0)
+					Zero <= 1;
+			end
+
+			// j
+			6'b001101: begin
+				Zero <= 1;
+			end
+
+			// jal
+			6'b001110: begin
+				Zero <= 1;
+			end
+
+			// jr
+			6'b100011: begin
+				Zero <= 1;
+			end
+
+
+
+
+
+
+
+		
+	end
 
 endmodule
 

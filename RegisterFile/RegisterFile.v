@@ -57,7 +57,14 @@ module RegisterFile(ReadRegister1, ReadRegister2, WriteRegister, WriteData, RegW
 	
 	output reg [31:0] ReadData1, ReadData2;
 
-	reg [31:0] Registers [0:31]; 
+	reg [31:0] Registers [0:31];
+	integer i;
+
+	initial begin
+		for (i = 0; i < 32; i = i + 1) begin
+			Registers[i] <= 32'd0;
+		end
+	end 
 
 	always @(*) begin
 		ReadData1 <= Registers[ReadRegister1];
@@ -66,7 +73,7 @@ module RegisterFile(ReadRegister1, ReadRegister2, WriteRegister, WriteData, RegW
 
 	always @(negedge Clk) begin
 		if (RegWrite == 1) begin
-			WriteData <= Registers[WriteRegister];
+			Registers[WriteRegister] <= WriteData;
 		end
 	end
 
